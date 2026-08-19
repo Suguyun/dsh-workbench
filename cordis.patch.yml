@@ -1,0 +1,38 @@
+# dsh-workbench 用户覆盖层 —— 叠加在 10 个 bundle 层之后(最后生效)。
+# 顶层是 loader patch 条目数组:id 定位的 config 覆盖 / disabled / insert 列表;
+# `!!js` 表达式允许。按 id 覆盖会整块替换目标行的 config,所以下面每行重述它拥有的每个键。
+
+# ── 1. 端口隔离:workbench 默认 3081(web profile 占 3080)─────────────────────
+# 保留 webStartup 表达式,`dsh --profile <name> --port <n>` 仍可临时覆盖。
+- id: webserver
+  config:
+    host: !!js ctx.webStartup.host ?? '127.0.0.1'
+    port: !!js ctx.webStartup.port ?? 3081
+
+# ── 2. dsh-loom:复查走更便宜模型,不占用主对话强模型 ─────────────────────────
+# 默认已是 deepseek-v4-flash(base 同款最便宜档);此处显式落地,避免后续升级漂移。
+- id: meta-validate
+  config:
+    mode: observe
+    regressionDir: ./meta-regressions
+    maxPendingPatches: 8
+    maxSignalsPerCycle: 50
+    thresholds:
+      repeatedFailureCount: 3
+      regressionFailureCount: 1
+    llm:
+      provider: deepseek-official
+      model: deepseek-v4-flash
+
+# ── 3. @nanmicoder/dsh-agent-teams:子 agent 并发上限 4 ───────────────────────
+- id: agent-teams
+  config:
+    stateDir: .agent-teams
+    memberProvider: spawn
+    maxMembers: 4
+
+# ── 4. dsh-rss:抓取超时。订阅列表经 dsh settings 服务持久化(~/.dsh/storages),
+#    0.2.0 无数据目录配置键。
+- id: rss
+  config:
+    timeoutMs: 15000
