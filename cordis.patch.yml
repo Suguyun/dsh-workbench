@@ -1,38 +1,52 @@
-# dsh-workbench 用户覆盖层 —— 叠加在 10 个 bundle 层之后(最后生效)。
-# 顶层是 loader patch 条目数组:id 定位的 config 覆盖 / disabled / insert 列表;
-# `!!js` 表达式允许。按 id 覆盖会整块替换目标行的 config,所以下面每行重述它拥有的每个键。
+# Your patch layer for this dsh profile, applied after every bundle layer:
+# a top-level YAML array of loader patch entries (id-targeted config
+# overrides, disables, and insert lists; `!!js` expressions allowed).
+#
+# ── 本 profile 已从 dsh-chrome 迁移到 dsh-insight ──────────────────────────────
+#
+# dsh-insight 是 dsh-chrome 的 fork，原来分散在两处的半边现在都收在这一个包里
+# （旧的 dsh-chrome 与 selection-insight 依赖已卸载）。构成：
+#
+#   node_modules/dsh-insight/          包本体（file: 依赖 → 指向本地 git 仓库）
+#   node_modules/dsh-insight/cordis.patch.yml
+#                                      bundle 层，挂三行：
+#                                        dsh-insight-bridge          WebSocket 桥接
+#                                        dsh-insight-browser-tools   browser_* 工具
+#                                        dsh-insight-selection       划词解读 /dsh-insight
+#   ~/Library/Application Support/dsh-insight/extension
+#                                      扩展。扩展 ID 由 manifest 的 key 决定，
+#                                      与旧版相同 → 原有设置原样保留。
+#
+# 本地仓库：~/GolandProjects/my-projects/dsh-insight
+# 远端：    https://github.com/Suguyun/dsh-insight
+#
+# 注意 file: 依赖是**实体副本**，不是符号链接。改完仓库源码后要重装一次：
+#   dsh plugin --profile web add file:$HOME/GolandProjects/my-projects/dsh-insight
+#
+# ── 页面自动注入保持关闭 ────────────────────────────────────────────────────
+#
+# 上游 dsh-chrome 的 bundle **无条件挂载**页面注入器，所以当初必须在本文件里显式
+# 禁用它（原来那条 `- id: dsh-chrome-page-injector / disabled: true` 已随之删除）。
+#
+# dsh-insight 把这个默认值反了过来：bundle 里那一行**默认就是注释掉的**，扩展侧的
+# 推送开关 insight_autopush 也默认 false。两层默认都关，本文件因此不再需要禁用条目。
+#
+# 这里也**故意不补** `disabled` 兜底：当前 bundle 并没有挂载该 id，补上去只会每次
+# 启动多一条「entry not found」警告，并且以后你真想打开时会变成「明明开了却没反应」
+# 的陷阱。
+#
+# 为什么必须关（历史教训）：注入器把整页正文当作常驻用户消息塞进「最近活跃会话」。
+# 正文会随每次切标签/导航不断累积；当活动标签页正是 dsh 会话界面时，正文就是整段
+# 对话，而对话里又含有先前注入的「当前页面」消息，于是自我复制、逐轮放大。上游
+# 100 万字符上限下实测 80 次注入 ≈ 246 万字符，把 104 万 token 的上下文顶到 150 万
+# 而触发 400。
+#
+# 确实想打开，需要**两处一起开**，只开一处会静默空转（生产端与消费端互不感知、
+# 不报错）：
+#   1) node_modules/dsh-insight/cordis.patch.yml 里取消 dsh-insight-page-injector
+#      那两行的注释；
+#   2) 扩展侧：chrome.storage.local.set({ insight_autopush: true })
+# 该实现自带上限：单次最多 4000 字符、正文里出现注入标记（自身回声）就整条跳过、
+# 单会话累计 60000 字符封顶（累计计数是进程内内存态，dsh 重启会清零）。
 
-# ── 1. 端口隔离:workbench 默认 3081(web profile 占 3080)─────────────────────
-# 保留 webStartup 表达式,`dsh --profile <name> --port <n>` 仍可临时覆盖。
-- id: webserver
-  config:
-    host: !!js ctx.webStartup.host ?? '127.0.0.1'
-    port: !!js ctx.webStartup.port ?? 3081
-
-# ── 2. dsh-loom:复查走更便宜模型,不占用主对话强模型 ─────────────────────────
-# 默认已是 deepseek-v4-flash(base 同款最便宜档);此处显式落地,避免后续升级漂移。
-- id: meta-validate
-  config:
-    mode: observe
-    regressionDir: ./meta-regressions
-    maxPendingPatches: 8
-    maxSignalsPerCycle: 50
-    thresholds:
-      repeatedFailureCount: 3
-      regressionFailureCount: 1
-    llm:
-      provider: deepseek-official
-      model: deepseek-v4-flash
-
-# ── 3. @nanmicoder/dsh-agent-teams:子 agent 并发上限 4 ───────────────────────
-- id: agent-teams
-  config:
-    stateDir: .agent-teams
-    memberProvider: spawn
-    maxMembers: 4
-
-# ── 4. dsh-rss:抓取超时。订阅列表经 dsh settings 服务持久化(~/.dsh/storages),
-#    0.2.0 无数据目录配置键。
-- id: rss
-  config:
-    timeoutMs: 15000
+[]

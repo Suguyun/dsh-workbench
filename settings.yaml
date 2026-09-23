@@ -1,0 +1,54 @@
+# ── dsh 全局设置备份（已脱敏）────────────────────────────────────────────────
+#
+# 注意：这不是 profile 的一部分。settings.yaml 是 dsh 的**全局**设置，克隆
+# 本仓库不会自动生效 —— 要用的话请放到 ~/.dsh/settings.yaml（按需挑你要的段）。
+#
+# 已脱敏：provider 名、apiKeyEnv、baseURL 全部替换为占位符。直接照抄不会连上
+# 任何模型，请改成你自己的 provider。模型 id / 上下文与输出上限保持原值。
+#
+# 模型 key **不在这个文件里**：它们在 ~/.dsh/.credentials.yaml，本仓库刻意
+# 不收录任何凭据。见 README「敏感信息」一节。
+
+ui-onboarding:
+  welcomeNoticeVersion: 2026-08-13.1
+
+llm-pi-ai:
+  providers:
+    custom-anthropic:
+      displayName: custom-anthropic
+      # key 从该环境变量读取（值放 ~/.dsh/.env 或进程环境）
+      apiKeyEnv: CUSTOM_API_KEY
+      api: anthropic-messages
+      baseURL: https://your-llm-endpoint.example.com
+      models:
+        - id: deepseek-v4.1-flash
+          name: deepseek-v4.1-flash
+          input:
+            - text
+            - image
+          contextWindow: 1000000
+          maxTokens: 1000000
+
+agent-presets:
+  default: cordis
+
+agent-default-model:
+  provider: custom-anthropic
+  model: deepseek-v4.1-flash
+
+catppuccin:
+  flavor: catppuccin-macchiato
+  glass:
+    enabled: true
+    mode: compat
+    blur: 8
+    frost: 20
+    brightness: 50
+  autoCheck: true
+  updateChannel: latest
+  overrides: {}
+  shikiStyle: italic-comments
+
+ui-theme:
+  preference: light
+  fontSize: 17

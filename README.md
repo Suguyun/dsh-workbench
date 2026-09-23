@@ -1,92 +1,99 @@
 # dsh-workbench
 
-DeepSeek Harness(dsh)精选工作 profile:**一个 Web 界面覆盖三类工作流** —— 写代码/开发、数据/办公、通用助手。定位"精而稳":10 个 bundle(2 官方 + 8 社区),全部经 npm 验证可装,不碰 GitHub 源码插件,不影响现有 profile。
+DeepSeek Harness（dsh）**当前实际在用的 profile 快照** —— 本仓库内容等于本机
+`~/.dsh/profiles/web` 的配置与依赖声明，用来整体替换先前那版 workbench 组合。
 
-- 端口:**3081**(避开 web profile 的 3080)
-- 回滚:删除 profile 目录即整体还原
-- 依赖:dsh CLI ≥ v0.1.0-rc.7、pnpm ≥ 11、Node ≥ 22
+- **11 个 bundle**：2 个官方 + 8 个社区 + 1 个本地 fork（`dsh-insight`）
+- **端口**：走 dsh 默认（3080）。要与源 profile 并存请用 `--port`，或按
+  `cordis.patch.yml` 顶部注释追加一条 `webserver` 覆盖
+- **实测环境**：dsh CLI `0.1.5-rc.1`（内置 `dsh-base` / `dsh-web-app` 为 `0.1.5-rc.2`）、
+  Node `v24.14.0`、pnpm `11.22.0`
 
 ## 安装
 
-profile 名 = `~/.dsh/profiles/` 下的目录名,可任意取名(下面用 `workbench`):
-
 ```bash
-# 方式一:gh 克隆到 profiles 目录
 gh repo clone Suguyun/dsh-workbench ~/.dsh/profiles/workbench
-cd ~/.dsh/profiles/workbench && pnpm install
+cd ~/.dsh/profiles/workbench
+pnpm install
 
-# 方式二:手动复制(把本仓库目录放到 ~/.dsh/profiles/<name>/ 下再 pnpm install)
+# 浏览器扩展半边（划词解读 + 浏览器工具需要；不装则这部分功能不可用）
+./node_modules/.bin/dsh-insight install
 
-# 启动
-dsh --profile workbench            # → http://127.0.0.1:3081
-dsh --profile workbench --port 8080   # 临时换端口
-dsh --profile workbench --patch ./x.yml   # 临时叠加一层 patch
-dsh --profile workbench --dump-config    # 查看组合树(10 个 bundle 应全在)
+dsh --profile workbench
 ```
 
-## Key 占位清单(启动前配好)
+`dsh-insight install` 会把扩展拷到
+`~/Library/Application Support/dsh-insight/extension`，随后在 `chrome://extensions`
+打开开发者模式，用「加载已解压的扩展程序」指向该目录。升级 `dsh-insight` 后需重跑一次。
 
-key 加载顺序:进程环境 > `~/.dsh/.env` > 当前目录 `.env`。推荐写进 `~/.dsh/.env`。
+## 依赖清单（按 bundle 加载顺序）
 
-| 变量 | 必填 | 用途 |
-|---|---|---|
-| `DEEPSEEK_API_KEY` | **必填** | 核心模型(base 默认 `provider: deepseek-official` → deepseek-v4-flash) |
-| `TAVILY_API_KEY` | 可选 | 提升 `web_search` 质量(不配则 keyless DuckDuckGo 兜底) |
-| `BRAVE_API_KEY` | 可选 | 同上,第二个可用引擎 |
-| ModLens 视觉模型 | 可选 | 见下方 ModLens 配置 |
+| # | 包 | 声明版本 | 作用 |
+|---|----|---------|------|
+| 1 | `@deepseek-ai/dsh-base` | 0.1.5-rc.2（随 CLI） | 核心：agent / session / llm / tools |
+| 2 | `@deepseek-ai/dsh-web-app` | 0.1.5-rc.2（随 CLI） | Web 界面 |
+| 3 | `dshmarket` | `^1.58.0` | 可视化插件市场：浏览、搜索、一键安装 |
+| 4 | `dsh-better-sidebar` | `^0.19.1` | VSCode 式右侧边栏（文件/编辑器/终端/git/浏览器），按会话隔离 |
+| 5 | `dsh-context` | `^0.54.4` | 上下文洞察与管理（仪表盘 + context 命令） |
+| 6 | `@liustack/modsearch` | `^5.10.4` | 联网搜索 / X 搜索 / 网页抓取 |
+| 7 | `@deepseek-harness-tui/dsh-tui` | `^0.10.2` | 交互式终端界面 |
+| 8 | `dsh-restart-button` | `^0.1.2` | 侧栏一键重启按钮（`POST /dsh-restart`） |
+| 9 | `dsh-smart-restart` | `^0.5.1` | 检测服务重启并在启动后唤醒主 agent |
+| 10 | `dsh-cool-theme` | `0.6.1` | 主题（34 套预设、明暗跟随） |
+| 11 | `dsh-insight` | `github:Suguyun/dsh-insight` | 浏览器伴侣：划词即解读 + 让 agent 读页面/抓包/驱动浏览器 |
 
-未配 `DEEPSEEK_API_KEY` 时 UI 可正常打开,模型调用会报清晰的鉴权错误。
+前两项由 dsh CLI 自带，因此不出现在 `dependencies` 里，但仍必须列在
+`dsh.profile.bundles` 中才会加载。列表就是加载顺序。
 
-## Bundle 清单(按加载顺序)
+## dsh-insight
 
-| # | 包 | 版本 | 作用 |
-|---|---|---|---|
-| 1 | `@deepseek-ai/dsh-base` | 0.1.0-rc.7(随 CLI) | 核心(agent/session/llm,默认 deepseek-official) |
-| 2 | `@deepseek-ai/dsh-web-app` | 0.1.0-rc.7 | Web 界面 |
-| 3 | `dsh-better-sidebar` | 0.13.1 | VSCode 式右侧边栏(编辑器/终端/Git/浏览器) |
-| 4 | `dsh-oh-my-theme` | 0.6.0 | 主题 + 懒加载文件树 + `@file` 引用 + Markdown 预览 |
-| 5 | `@liustack/modlens` | 3.21.1 | 图片→结构化文本(`modlens_read_image`) |
-| 6 | `dsh-web-search` | 0.1.2 | 多引擎联网搜索(自动降级)+ URL 提取(带兼容补丁,见下) |
-| 7 | `dsh-rss` | 0.2.0 | RSS/Atom 订阅、OPML 导入导出 |
-| 8 | `dsh-loom` | 1.1.0 | 第二验证人:静默复查模型产出(observe 模式) |
-| 9 | `@nanmicoder/dsh-agent-teams` | 0.1.7 | 按需多 agent 团队(并发上限 4) |
-| 10 | `dsh-crew` | 0.4.3 | 角色化 agent 小队 + Git 推送守卫 |
+本仓库唯一**不在 npm 上**的依赖，用 `github:` 协议直接指向源码仓库：
 
-## 配置说明(已在本仓库 `cordis.patch.yml` 落地)
+- 仓库：<https://github.com/Suguyun/dsh-insight>
+- 它是 [dsh-chrome](https://github.com/stuarthu/dsh-chrome)（MIT，© 2026 Stuart Hu）的 fork，
+  把上游的浏览器伴侣做成「划词即解读 + 侧栏多轮追问 + Markdown 渲染」，
+  并沿用其有界化的页面注入实现。
+- 尚未发布到 npm；`github:` 不带 ref 时跟随默认分支 `main`，所以
+  `pnpm update dsh-insight` 会拉到最新提交。上游发布 npm 包后可以把声明换成版本号。
 
-- **端口**:webserver 默认 3081,`--port` 仍可覆盖。
-- **dsh-loom**:复查模型显式固定为 `deepseek-v4-flash`(便宜档),`mode: observe` 只观察不自动改。
-- **dsh-agent-teams**:`maxMembers: 4`(子 agent 并发上限)。
-- **dsh-rss**:抓取超时 15s。订阅列表经 dsh settings 服务持久化(`~/.dsh/storages`);0.2.0 无数据目录配置键。
-- **dsh-oh-my-theme**:皮肤/字号在 UI 里配:**设置 → 通用设置 → Oh My Theme**;文件树跟随当前会话工作区。
-- **dsh-web-search**:三个引擎 key 走 credentials 服务(设置页卡片管理)或 `TAVILY_API_KEY`/`BRAVE_API_KEY` 环境变量;一个 key 不填也有 DuckDuckGo 兜底。
-- **ModLens**:自带配置系统,不用 patch:
+它的 bundle patch 挂了 3 行（`dsh-insight-bridge`、`dsh-insight-browser-tools`、
+`dsh-insight-selection`），第 4 行 `dsh-insight-page-injector` 被注释掉 ——
+即**页面正文不会自动进入上下文**。
 
-  ```bash
-  modlens config init
-  modlens config set openai.baseUrl https://dashscope.aliyuncs.com/compatible-mode/v1  # qwen-vl 示例
-  modlens config set openai.apiKey  <key>
-  modlens config set openai.model   qwen3-vl-plus
-  ```
+## 页面自动注入（默认关闭）
 
-  配置文件在 `~/.modlens/config.json`(0600)。零配置时走 antigravity-cli 免费通道。
+要打开必须**两处一起开**，只开一处会静默空转、不报错：
 
-## dsh-web-search 兼容补丁(本仓库新增内容)
+1. 按 `dsh-insight/cordis.patch.yml` 的说明挂上 `dsh-insight-page-injector`；
+2. 扩展侧执行 `chrome.storage.local.set({ insight_autopush: true })`。
 
-`patches/dsh-web-search@0.1.2.patch` 通过 pnpm `patchedDependencies` 自动应用,解决 dsh-web-search 0.1.2 与 rc.7 的 API 漂移:rc.7 把设置槽 `settings.plugin.item` 改为 keyed slot(必须传 `options.key`),而 0.1.2 只传了 `id`,导致浏览器半加载失败(`keyed slot "settings.plugin.item" requires options.key`)。补丁在注册选项里补上 `key: 'dsh-web-search'`。`pnpm install` 会自动重放;上游修复后可删除 `pnpm-workspace.yaml` 中的 `patchedDependencies` 条目与 `patches/` 目录。
+代价：你浏览的每个页面正文都会进模型上下文；当活动标签页恰好是 dsh 自己的会话界面时，
+正文就是整段对话、而对话里又含有先前注入的「当前页面」消息，会自我复制逐轮放大。
+dsh-insight 的实现是有界版本（单次 4000 字符、命中自身回声整条跳过、单会话累计 60000 字符封顶）。
 
-## 插件管理
+## 敏感信息与隐私
+
+本仓库是**公开**的，因此刻意不收录：
+
+- `~/.dsh/.credentials.yaml` —— 模型与服务凭据
+- `~/.dsh/sessions/`、`attachments/`、`storages/` —— 会话记录与运行数据
+- `node_modules/`、`pnpm-lock.yaml` —— 只记录依赖声明，不锁定解析结果
+
+`settings.yaml` 是附带的一份全局设置备份，**已脱敏**：provider 名、`apiKeyEnv`、
+`baseURL` 全都换成了占位符 —— 直接照抄连不上任何模型，请改成你自己的。
+它不属于 profile，要用请自行合并进 `~/.dsh/settings.yaml`。
+
+## 更新依赖
 
 ```bash
-dsh plugin --profile workbench add <pkg>      # pnpm 安装 + 自动加入 bundles
+dsh plugin --profile workbench add <pkg>      # 安装并自动加入 bundles
 dsh plugin --profile workbench remove <pkg>   # 移除
-# 手动调整加载顺序或新增 bundle:编辑 package.json 的 dsh.profile.bundles
 ```
 
-## 日常用法
+也可手工编辑 `package.json` 的 `dsh.profile.bundles` 调整顺序或删除条目。
 
-侧边栏写代码/看 Git → `@file` 注入文件 → ModLens 贴图 → `web_search` 联网 → RSS 订阅 → loom 复查关键产出 → agent-teams / crew 复杂任务。
+本仓库是**手动快照**，不会自动跟随本机变化；改动后请同步 `package.json`。
 
-## License
+## 许可
 
-MIT。`patches/dsh-web-search@0.1.2.patch` 是对 [dsh-web-search](https://www.npmjs.com/package/dsh-web-search)(© 2026 haibinwang9,MIT)的派生修改,随原包 MIT 条款再分发。
+MIT，见 `LICENSE`。`dsh-insight` 同为 MIT，并派生自 dsh-chrome（MIT，© 2026 Stuart Hu）。

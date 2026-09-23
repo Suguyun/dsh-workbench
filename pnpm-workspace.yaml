@@ -4,11 +4,10 @@ packages:
 nodeLinker: hoisted
 autoInstallPeers: false
 allowBuilds:
-  koffi: true
   node-pty: true
 minimumReleaseAgeExclude:
-  - '@liustack/modlens@3.21.1'
-  - dsh-better-sidebar@0.13.1
-  - dsh-crew@0.4.3
-patchedDependencies:
-  dsh-web-search@0.1.2: patches/dsh-web-search@0.1.2.patch
+  - '@liustack/modsearch@5.10.3 || 5.10.4'
+  - '@nonamelego/dsh-catppuccin@0.5.2'
+  - dsh-context@0.54.4
+  - dshmarket@1.55.0 || 1.58.0
+  - '@ash-qw/dsh-theme-prts@0.1.100'
