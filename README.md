@@ -12,10 +12,9 @@ cd ~/dsh-workbench
 ./bootstrap.sh --apply      # ② 确认后执行
 ```
 
-脚本做三件事：`profiles/*` → `~/.dsh/profiles/`、`agent-presets/*` → `~/.dsh/.agent-presets/`、
-各自 `pnpm install`，最后 `dsh-insight install`。
+脚本做两件事：`profiles/*` → `~/.dsh/profiles/`，各自 `pnpm install`，最后 `dsh-insight install`。
 
-已存在的 profile / 预设默认**跳过**，要覆盖加 `--force`（覆盖前先备份到
+已存在的 profile 默认**跳过**，要覆盖加 `--force`（覆盖前先备份到
 `~/.dsh/backups/migrate-<时间戳>/`）。常用开关：`--settings`（连全局设置一起装，默认不碰）、
 `--no-install`、`--no-extension`。
 
@@ -35,7 +34,6 @@ settings.yaml             全局设置，已脱敏          → ~/.dsh/settings.
 credentials.example.env   凭据字段清单，无真值      → ~/.dsh/.env
 profiles/web/             主 profile（11 个 bundle）
 profiles/dsh-tui/         纯终端 profile
-agent-presets/liangshen/  「梁神模式」agent 预设
 ```
 
 - **dsh CLI 本体不在仓库里**：先 `npm i -g @deepseek-ai/dsh@0.1.5-rc.1`。

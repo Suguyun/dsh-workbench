@@ -5,14 +5,13 @@
 # 把本仓库的内容铺到一台新机器的 dsh 上：
 #
 #   profiles/<name>/      →  $DSH_HOME/profiles/<name>/        然后 pnpm install
-#   agent-presets/<name>/ →  $DSH_HOME/.agent-presets/<name>/
 #   settings.yaml         →  $DSH_HOME/settings.yaml           （默认不动，见 --settings）
 #
 # 默认是**预演**：只打印将要做什么，不写任何文件。确认无误后加 --apply。
 #
 # 用法:
 #   ./bootstrap.sh                          预演，看一遍计划
-#   ./bootstrap.sh --apply                  执行（已存在的 profile / 预设自动跳过）
+#   ./bootstrap.sh --apply                  执行（已存在的 profile 自动跳过）
 #   ./bootstrap.sh --apply --force          已存在的也覆盖（先备份到 backups/migrate-*）
 #   ./bootstrap.sh --apply --settings       连带安装 settings.yaml（先备份旧的）
 #
@@ -98,7 +97,7 @@ case "$REPO_DIR/" in
 esac
 
 # ── 1. 环境检查 ──────────────────────────────────────────────────────────────
-step "1/6 环境检查"
+step "1/5 环境检查"
 
 need() { command -v "$1" >/dev/null 2>&1; }
 
@@ -133,7 +132,7 @@ if $DO_CLI; then
 fi
 
 # ── 2. Profile ───────────────────────────────────────────────────────────────
-step "2/6 安装 profile"
+step "2/5 安装 profile"
 say "${DIM}目标：$DSH_HOME/profiles/<name>/${OFF}"
 
 INSTALLED=""
@@ -165,34 +164,8 @@ for src in "$REPO_DIR"/profiles/*/; do
   [ "$name" = "web" ] && WEB_INSTALLED=true
 done
 
-# ── 3. Agent 预设 ────────────────────────────────────────────────────────────
-step "3/6 安装 agent 预设"
-say "${DIM}目标：$DSH_HOME/.agent-presets/<name>/${OFF}"
-
-for src in "$REPO_DIR"/agent-presets/*/; do
-  [ -d "$src" ] || continue
-  name="$(basename "$src")"
-  dest="$DSH_HOME/.agent-presets/$name"
-
-  if [ -e "$dest" ] && ! $FORCE; then
-    skip "$name —— 已存在，跳过（要覆盖用 --force）"
-    continue
-  fi
-
-  if [ -e "$dest" ]; then
-    warn "  覆盖前备份 $dest → $BACKUP_DIR_SAFE/agent-presets-$name/"
-    run mkdir -p "$BACKUP_DIR_SAFE/agent-presets-$name"
-    run cp -R "$dest/." "$BACKUP_DIR_SAFE/agent-presets-$name/"
-    run rm -rf "$dest"
-  fi
-
-  run mkdir -p "$dest"
-  run cp -R "$src." "$dest/"
-  ok "$name → $dest"
-done
-
-# ── 4. 全局 settings.yaml ────────────────────────────────────────────────────
-step "4/6 全局设置"
+# ── 3. 全局 settings.yaml ────────────────────────────────────────────────────
+step "3/5 全局设置"
 
 if $DO_SETTINGS; then
   dest="$DSH_HOME/settings.yaml"
@@ -209,8 +182,8 @@ else
   skip "未安装 —— 默认不碰你的全局设置。要安装加 --settings"
 fi
 
-# ── 5. 依赖 ──────────────────────────────────────────────────────────────────
-step "5/6 依赖安装（pnpm install）"
+# ── 4. 依赖 ──────────────────────────────────────────────────────────────────
+step "4/5 依赖安装（pnpm install）"
 
 if $DO_INSTALL; then
   if need pnpm; then
@@ -230,8 +203,8 @@ else
   skip "已按 --no-install 跳过"
 fi
 
-# ── 6. 浏览器扩展 ────────────────────────────────────────────────────────────
-step "6/6 浏览器扩展"
+# ── 5. 浏览器扩展 ────────────────────────────────────────────────────────────
+step "5/5 浏览器扩展"
 
 if $DO_EXTENSION && $DO_INSTALL && $WEB_INSTALLED; then
   bin="$DSH_HOME/profiles/web/node_modules/.bin/dsh-insight"
