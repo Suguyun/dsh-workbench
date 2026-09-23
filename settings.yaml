@@ -1,13 +1,13 @@
-# ── dsh 全局设置备份（已脱敏）────────────────────────────────────────────────
+# ── dsh 全局设置（已脱敏）────────────────────────────────────────────────────
 #
-# 注意：这不是 profile 的一部分。settings.yaml 是 dsh 的**全局**设置，克隆
-# 本仓库不会自动生效 —— 要用的话请放到 ~/.dsh/settings.yaml（按需挑你要的段）。
+# 注意：这**不是** profile 的一部分。settings.yaml 是 dsh 的全局设置，位置是
+# ~/.dsh/settings.yaml。克隆本仓库不会自动生效，`bootstrap.sh` 在你不给
+# --settings 时也不会碰它 —— 要用请自己合并需要的段落。
 #
-# 已脱敏：provider 名、apiKeyEnv、baseURL 全部替换为占位符。直接照抄不会连上
-# 任何模型，请改成你自己的 provider。模型 id / 上下文与输出上限保持原值。
+# 已脱敏：provider 名、apiKeyEnv、baseURL 全部换成了占位符。照抄连不上任何模型，
+# 必须改成你自己的 provider。模型 id 与上下文/输出上限保持原值。
 #
-# 模型 key **不在这个文件里**：它们在 ~/.dsh/.credentials.yaml，本仓库刻意
-# 不收录任何凭据。见 README「敏感信息」一节。
+# 真正的 key 不在这个文件里：见 credentials.example.env。
 
 ui-onboarding:
   welcomeNoticeVersion: 2026-08-13.1
@@ -16,7 +16,7 @@ llm-pi-ai:
   providers:
     custom-anthropic:
       displayName: custom-anthropic
-      # key 从该环境变量读取（值放 ~/.dsh/.env 或进程环境）
+      # key 从这个环境变量读；值放 ~/.dsh/.env 或进程环境
       apiKeyEnv: CUSTOM_API_KEY
       api: anthropic-messages
       baseURL: https://your-llm-endpoint.example.com
@@ -37,12 +37,12 @@ agent-default-model:
   model: deepseek-v4.1-flash
 
 catppuccin:
-  flavor: catppuccin-macchiato
+  flavor: off
   glass:
     enabled: true
     mode: compat
-    blur: 8
-    frost: 20
+    blur: 12
+    frost: 45
     brightness: 50
   autoCheck: true
   updateChannel: latest
@@ -52,3 +52,10 @@ catppuccin:
 ui-theme:
   preference: light
   fontSize: 17
+
+# ⚠️ 安全相关：默认审批策略 = 全权限放行（工具调用不再逐次询问）。
+#
+# 这是本机原本的设置，为了忠实迁移而保留原值。新机器上如果你不希望工具默认
+# 无审批执行，把 defaultPreset 改成 ask，或者整段删掉走默认值。
+permission:
+  defaultPreset: danger-full-access

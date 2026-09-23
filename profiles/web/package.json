@@ -1,5 +1,5 @@
 {
-  "name": "dsh-profile-workbench",
+  "name": "dsh-profile-web",
   "private": true,
   "dependencies": {
     "@deepseek-harness-tui/dsh-tui": "^0.10.2",

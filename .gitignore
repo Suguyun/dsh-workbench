@@ -1,15 +1,12 @@
-# 依赖
+# 依赖与锁文件：只记录声明，不锁定解析结果
 node_modules/
-
-# 本仓库只记录依赖声明（package.json + pnpm-workspace.yaml），不提交 lockfile：
-# 里面会写进本机绝对路径/解析结果，且与「快照」定位不符。
 pnpm-lock.yaml
 
 # macOS
 .DS_Store
 *.log
 
-# 插件运行时状态（各插件自己生成，不该入库）
+# 插件运行时状态（各插件自己生成）
 .dsh-market/
 .dsh-module-fallback/
 .agent-teams/
@@ -18,3 +15,10 @@ meta-regressions/
 # 打包产物
 dist/
 *.zip
+
+# ── 凭据：绝不入库 ──────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+.credentials.yaml
+credentials.yaml
